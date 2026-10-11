@@ -1,15 +1,42 @@
 {
   "workbench.colorCustomizations": {
-    "activityBar.background": "#15158E",
-    "titleBar.activeBackground": "#1E1EC7",
+    "activityBar.background": "#094d23",
+    "titleBar.activeBackground": "#094d23",
     "titleBar.activeForeground": "#FCFCFF",
-    "titleBar.inactiveBackground": "#15158E",
+    "titleBar.inactiveBackground": "#094d23",
     "titleBar.inactiveForeground": "#FCFCFF",
-    "statusBar.background": "#15158E",
+    "statusBar.background": "#094d23",
     "statusBar.foreground": "#FCFCFF",
-    "statusBar.debuggingBackground": "#15158E",
+    "statusBar.debuggingBackground": "#094d23",
     "statusBar.debuggingForeground": "#FCFCFF",
-    "statusBar.noFolderBackground": "#15158E",
-    "statusBar.noFolderForeground": "#FCFCFF"
-  }
+    "statusBar.noFolderBackground": "#094d23",
+    "statusBar.noFolderForeground": "#FCFCFF",
+  },
+  "latex-workshop.latex.tools": [
+    {
+      "name": "pdflatex",
+      "command": "pdflatex",
+      "args": ["-interaction=nonstopmode", "-synctex=1", "%DOC%"],
+      "env": {}
+    },
+    {
+      "name": "bibtex",
+      "command": "bibtex",
+      "args": ["%DOCFILE%"],
+      "env": {}
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "pdflatex",
+      "tools": ["pdflatex"]
+    },
+    {
+      "name": "pdflatex -> bibtex -> pdflatex*2",
+      "tools": ["pdflatex", "bibtex", "pdflatex", "pdflatex"]
+    }
+  ],
+  "latex-workshop.latex.autoBuild.run": "never",
+  "latex-workshop.latex.recipe.default": "pdflatex -> bibtex -> pdflatex*2",
+  "latex-workshop.view.pdf.viewer": "tab"
 }
