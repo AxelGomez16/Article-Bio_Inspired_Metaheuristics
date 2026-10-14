@@ -1,0 +1,25 @@
+name: ma_venv
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Conda packages
+  - python=3.12
+  - pywin32
+  - pip
+  - pip:
+    # Pip packages
+    - loguru
+
+    # Data science
+    - pandas
+    - numpy
+
+    # Plotting
+    - plotly
+    - matplotlib
+    - seaborn
+
+    # Notebook
+    - jupyter
+    - notebook
