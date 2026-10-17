@@ -1,8 +1,6 @@
 import random
 from typing import Callable, Optional, TypeAlias
 
-from scripts.src.visualizer.ObjectiveFunctionVisualizer import ObjectiveFunctionPlotter
-
 Position: TypeAlias = list[float]
 EvaluatedWolf: TypeAlias = tuple[int, Position, float]
 
@@ -56,13 +54,14 @@ class GWO:
     self.population_history: list[list[Position]] = []
     self.population_fitness_history: list[list[float]] = []
 
-    self.plotter = (
-      ObjectiveFunctionPlotter(
+    self.plotter = None
+    if self.dimension == 2:
+      from scripts.src.visualizer.ObjectiveFunctionVisualizer import ObjectiveFunctionPlotter
+
+      self.plotter = ObjectiveFunctionPlotter(
         fun_obj=self.fitness_function,
         space=self.space_search
       )
-      if self.dimension == 2 else None
-    )
 
 
   def _random_position(self) -> Position:
@@ -227,6 +226,8 @@ class GWO:
 
   def visualize_charts(self):
     """Show the convergence and fitness charts of the wolf population."""
+    from scripts.src.visualizer.ObjectiveFunctionVisualizer import ObjectiveFunctionPlotter
+
     if self.plotter is not None and self.best_position is not None:
       self.plotter.plot_best_solution(
         best_point=self.best_position,
