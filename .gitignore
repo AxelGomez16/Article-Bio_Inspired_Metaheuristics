@@ -19,5 +19,6 @@
 *.bcf
 *.run.xml
 logs/
+.idea/
 
 __pycache__/

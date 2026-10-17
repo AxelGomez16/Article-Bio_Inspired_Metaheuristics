@@ -1,18 +1,20 @@
 import random
 from typing import Callable, Optional, TypeAlias
 
+from scripts.src.visualizer.ObjectiveFunctionVisualizer import ObjectiveFunctionPlotter
 
 Position: TypeAlias = list[float]
 EvaluatedWolf: TypeAlias = tuple[int, Position, float]
 
 
 class GWO:
-  def __init__(self,
-              fitness_function: Callable[[Position], float],
-              space_search: list[list[float]],
-              max_iterations: int = 100,
-              agents_number: int = 20
-              ) -> None :
+  def __init__(
+      self,
+      fitness_function: Callable[[Position], float],
+      space_search: list[list[float]],
+      max_iterations: int = 100,
+      agents_number: int = 20
+  ) -> None:
     """
     Initializes the Grey Wolf Optimizer (GWO).
 
@@ -37,6 +39,16 @@ class GWO:
     self.best_position: Optional[Position] = None
     self.best_fitness = float('inf')
     self.fitness_history: list[float] = []
+    self.population_history: list[list[Position]] = []
+    self.population_fitness_history: list[list[float]] = []
+
+    self.plotter = (
+      ObjectiveFunctionPlotter(
+        fun_obj=self.fitness_function,
+        space=self.space_search
+      )
+      if self.dimension == 2 else None
+    )
 
 
   def _random_position(self) -> Position:
@@ -60,14 +72,18 @@ class GWO:
     """Returns a random number uniformly distributed in [0, 1]."""
     return random.uniform(0, 1)
 
-  def start(self) -> tuple[Position, float]:
+  def start(self) -> "GWO":
     """
     Runs the Grey Wolf Optimizer (GWO).
 
-    Returns:
-    - best_position: position of the best wolf found.
-    - best_fitness: fitness value of that wolf.
+    Returns this optimizer instance with its results and histories populated.
     """
+
+    self.best_position = None
+    self.best_fitness = float('inf')
+    self.fitness_history = []
+    self.population_history = []
+    self.population_fitness_history = []
 
     # Initialize the positions of the agents (Wolves)
 
@@ -76,6 +92,8 @@ class GWO:
       self._random_position() for _ in range(self.agents_number)
     ]
     fitness: list[float] = [self._evaluate(w) for w in wolves_positions]
+    self.population_history.append([position.copy() for position in wolves_positions])
+    self.population_fitness_history.append(fitness.copy())
 
     for iteration in range(self.max_iterations):
 
@@ -141,9 +159,48 @@ class GWO:
         self.best_fitness = fitness[best_wolf_id]
         self.best_position = wolves_positions[best_wolf_id].copy()
       self.fitness_history.append(self.best_fitness)
+      self.population_history.append([position.copy() for position in wolves_positions])
+      self.population_fitness_history.append(fitness.copy())
 
     # Step 5a: Return the best solution found
     if self.best_position is None:
       raise RuntimeError("GWO did not produce a best position")
-    return self.best_position, self.best_fitness
+    return self
 
+
+  def visualize_movement(self, delay_interval: int = 250) -> None:
+    """Show the movement of the wolf population over the objective surface."""
+    if self.plotter is None:
+      raise ValueError("Population surface visualization requires exactly 2 dimensions")
+
+    self.plotter.animate_population(
+      population_history=self.population_history,
+      fitness_history=self.population_fitness_history,
+      title="Grey Wolf Optimizer",
+      interval=delay_interval,
+    )
+
+  def visualize_movement_html(self,):
+    """Open the interactive html animation of the wolf population."""
+    if self.plotter is None:
+      raise ValueError("Population surface visualization requires exactly 2 dimensions")
+
+    return self.plotter.animate_population_plotly(
+      population_history=self.population_history,
+      fitness_history=self.population_fitness_history,
+      title="Grey Wolf Optimizer"
+    )
+
+  def visualize_charts(self):
+    """Show the convergence and fitness charts of the wolf population."""
+    if self.plotter is not None and self.best_position is not None:
+      self.plotter.plot_best_solution(
+        best_point=self.best_position,
+        best_fitness=self.best_fitness,
+        title="GWO Best Solution"
+      )
+    ObjectiveFunctionPlotter.plot_convergence(
+      fitness_history=self.fitness_history,
+      title="GWO Convergence Curve",
+      log_scale=True
+      )
