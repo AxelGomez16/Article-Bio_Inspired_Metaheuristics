@@ -1,5 +1,6 @@
 import numpy as np
-
+import matplotlib
+matplotlib.use('TkAgg') # Just for my pycharm
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
@@ -99,7 +100,8 @@ class ObjectiveFunctionPlotter:
       self.y_axis,
       self.z_axis,
       levels=20,
-      cmap="viridis"
+      cmap="viridis",
+      zorder=1
     )
     ax2.scatter(
       bp[0],
@@ -108,6 +110,7 @@ class ObjectiveFunctionPlotter:
       marker="*",
       s=200,
       edgecolor="black",
+      zorder=10,
       label="Best solution"
     )
 
@@ -196,13 +199,15 @@ class ObjectiveFunctionPlotter:
       self.y_axis,
       self.z_axis,
       levels=20,
-      cmap="viridis"
+      cmap="viridis",
+      zorder=1
     )
     contour_points = contour_axis.scatter(
       initial_positions[:, 0],
       initial_positions[:, 1],
       c=colors,
-      s=35
+      s=35,
+      zorder=2
     )
     contour_best = contour_axis.scatter(
       [initial_positions[initial_best_index, 0]],
@@ -210,7 +215,8 @@ class ObjectiveFunctionPlotter:
       c="gold",
       marker="*",
       s=180,
-      edgecolor="black"
+      edgecolor="black",
+      zorder=3
     )
     contour_axis.set_xlabel("x_1")
     contour_axis.set_ylabel("x_2")

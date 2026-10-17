@@ -13,7 +13,9 @@ class GWO:
       fitness_function: Callable[[Position], float],
       space_search: list[list[float]],
       max_iterations: int = 100,
-      agents_number: int = 20
+      agents_number: int = 20,
+      mode: str = "minimize",
+      tolerance: float = 1e-6
   ) -> None:
     """
     Initializes the Grey Wolf Optimizer (GWO).
@@ -24,20 +26,32 @@ class GWO:
                     Example: [[-5, 5], [-5, 5]] for 2 dimensions.
     - max_iterations: maximum number of iterations (Default: 100).
     - agents_number: number of wolves (Default: 20).
+    - mode: optimization mode, either "minimize" or "maximize" (Default: "minimize").
+    - tolerance: tolerance for convergence (Default: 1e-6).
     """
     self.fitness_function = fitness_function
     self.space_search = space_search
     self.agents_number = agents_number
     self.max_iterations = max_iterations
     self.dimension = len(space_search)
+    self.mode = mode
+    self.tolerance = tolerance
 
+    if self.mode == "minimize":
+      self.is_maximizing = False
+    elif self.mode == "maximize":
+      self.is_maximizing = True
+    else:
+      raise ValueError("mode must be either 'minimize' or 'maximize'")
+    if self.tolerance < 0:
+      raise ValueError("tolerance must be non-negative")
     if self.agents_number < 3:
       raise ValueError("agents_number must be at least 3")
     if self.max_iterations < 1:
       raise ValueError("max_iterations must be at least 1")
 
     self.best_position: Optional[Position] = None
-    self.best_fitness = float('inf')
+    self.best_fitness = self._initial_best_fitness()
     self.fitness_history: list[float] = []
     self.population_history: list[list[Position]] = []
     self.population_fitness_history: list[list[float]] = []
@@ -61,6 +75,14 @@ class GWO:
     """Evaluates the fitness of a given position."""
     return self.fitness_function(position)
 
+  def _initial_best_fitness(self) -> float:
+    """Returns the worst possible initial fitness for the selected mode."""
+    return float("-inf") if self.is_maximizing else float("inf")
+
+  def _is_better(self, candidate: float, current: float) -> bool:
+    """Returns whether candidate improves the current fitness."""
+    return candidate > current if self.is_maximizing else candidate < current
+
   def _is_inside_space_search(self, position: Position) -> Position:
     """Check the position so it stays inside the search space."""
     return [min(max(position[d], self.space_search[d][0]),
@@ -80,7 +102,7 @@ class GWO:
     """
 
     self.best_position = None
-    self.best_fitness = float('inf')
+    self.best_fitness = self._initial_best_fitness()
     self.fitness_history = []
     self.population_history = []
     self.population_fitness_history = []
@@ -108,15 +130,18 @@ class GWO:
       for wolf in range(self.agents_number):
         evaluated_wolves.append((wolf, wolves_positions[wolf], fitness[wolf]))
 
-      # Order from least to greatest fitness value (Minimization)
-      evaluated_wolves.sort(key=lambda wolf_: wolf_[2])
+      # Put the best three wolves first for either optimization mode.
+      evaluated_wolves.sort(
+        key=lambda wolf_: wolf_[2],
+        reverse=self.is_maximizing
+      )
 
       alpha_wolf = evaluated_wolves[0]
       beta_wolf = evaluated_wolves[1]
       delta_wolf = evaluated_wolves[2]
       omega_wolf = evaluated_wolves[3:]
 
-      if alpha_wolf[wolf_id_fitness_value] < self.best_fitness:
+      if self._is_better(alpha_wolf[wolf_id_fitness_value], self.best_fitness):
         self.best_fitness = alpha_wolf[wolf_id_fitness_value]
         self.best_position = alpha_wolf[wolf_id_position].copy()
 
@@ -154,13 +179,22 @@ class GWO:
 
       # Step 5: Check the stopping criterion
       # Step 5b: Evaluate the condition of stop and save the best solution till now
-      best_wolf_id = min(range(self.agents_number), key=lambda wolf_: fitness[wolf_])
-      if fitness[best_wolf_id] < self.best_fitness:
+      best_wolf_id = (
+        max(range(self.agents_number), key=lambda wolf_: fitness[wolf_])
+        if self.is_maximizing
+        else min(range(self.agents_number), key=lambda wolf_: fitness[wolf_])
+      )
+      previous_best_fitness = self.best_fitness
+      if self._is_better(fitness[best_wolf_id], self.best_fitness):
         self.best_fitness = fitness[best_wolf_id]
         self.best_position = wolves_positions[best_wolf_id].copy()
       self.fitness_history.append(self.best_fitness)
       self.population_history.append([position.copy() for position in wolves_positions])
       self.population_fitness_history.append(fitness.copy())
+
+      # TODO: Review the stopping criteria mmm
+      # if abs(self.best_fitness - previous_best_fitness) <= self.tolerance:
+      #   break
 
     # Step 5a: Return the best solution found
     if self.best_position is None:
@@ -185,7 +219,7 @@ class GWO:
     if self.plotter is None:
       raise ValueError("Population surface visualization requires exactly 2 dimensions")
 
-    return self.plotter.animate_population_plotly(
+    return self.plotter.animate_population_html(
       population_history=self.population_history,
       fitness_history=self.population_fitness_history,
       title="Grey Wolf Optimizer"

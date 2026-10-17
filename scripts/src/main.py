@@ -20,7 +20,9 @@ def start_GWO() -> None:
     fitness_function=rastrigin,
     space_search=space_search,
     max_iterations=100,
-    agents_number=20
+    agents_number=10,
+    mode="minimize",
+    tolerance=1e-6  # No implemented yet
   )
 
   gwo = gwo.start()
@@ -31,7 +33,7 @@ def start_GWO() -> None:
   print("Best position:", best_pos)
   print("Best fitness :", best_fit)
 
-  gwo.visualize_movement(delay_interval=750)
+  gwo.visualize_movement(delay_interval=250)
   gwo.visualize_movement_html()
   gwo.visualize_charts()
 
